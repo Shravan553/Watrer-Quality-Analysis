@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Quality Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Water Quality Analysis</h1>
+        <form id="dataForm">
+            <label for="csvFile">Upload CSV File:</label><br>
+            <input type="file" id="csvFile" accept=".csv"><br><br>
+
+            <label for="action">Choose an action:</label><br>
+            <select id="action">
+                <option value="summary">View Summary Statistics</option>
+                <option value="histogram">Plot pH Histogram</option>
+                <option value="scatter">Scatter Plot (pH vs Dissolved Oxygen)</option>
+            </select><br><br>
+
+            <button type="button" class="button" onclick="analyzeData()">Analyze</button>
+        </form>
+
+        <div id="output" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function analyzeData() {
+            const csvFile = document.getElementById('csvFile').files[0];
+            const action = document.getElementById('action').value;
+
+            if (!csvFile) {
+                alert('Please upload a CSV file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', csvFile);
+            formData.append('action', action);
+
+            fetch('http://127.0.0.1:5000/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const output = document.getElementById('output');
+                if (data.error) {
+                    output.innerHTML = `<p style='color: red;'>${data.error}</p>`;
+                } else {
+                    if (data.image) {
+                        output.innerHTML = `<img src="data:image/png;base64,${data.image}" alt="Result" style="max-width: 100%;">`;
+                    } else {
+                        output.innerHTML = `<pre>${data.result}</pre>`;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing the data.');
+            });
+        }
+    </script>
+</body>
+</html>
